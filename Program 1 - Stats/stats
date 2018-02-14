@@ -1,0 +1,242 @@
+#!/bin/bash
+#
+#Name: Stephen Townsend
+#Orginization: Oregon State CS 344 Summer 2017
+#Date: 7/10/17
+#
+#Description: This script is used to take a user designated file or user 
+#input.  It will then use that data and take the average and median of 
+#either the rows or the columns.
+#
+#Please note: This is not the most efficent way, but with limited knowledge 
+#of BASH, at this time, it is a working concept.
+
+trap "rm -f dataFile$$ tempFile$$ sortedList$$ resultFile$$ columnResultFile$$; echo 'Signal received, exiting' >/dev/stderr; exit 1" INT HUP TERM
+
+#---------------------------------------
+#Calculate Average and Median
+#
+#This is used to loop through and sum each
+#row and in the same looping comparing the 
+#median location number to get the median
+#number.
+#---------------------------------------
+function avgMedian
+{
+	sum=0
+	average=0
+	intCount=0
+	median=0
+	medianLoc=0
+
+	medianLoc=`expr $((colCount/2 + 1))` 			#Get the median location
+	for i in $inputFile								#Loop through each element
+	do
+		#---------------------------------------
+		#Calculate Average
+		#---------------------------------------
+		sum=`expr $sum + $i`						#Sum the elements
+		((intCount++))								#Track amount of elements
+		average=`expr $(((sum + (intCount/2))/ intCount))`	#Calculate Average
+
+		#---------------------------------------
+		#Find Median
+		#---------------------------------------	
+		#Check if current position is equal to median location
+		if [[ $intCount == $medianLoc ]]			 	
+		then
+			median=$i								#Found Median Value i
+		fi
+	done
+
+	echo -e "$average\t$median" >> resultFile$$		#Output Results
+}
+
+
+#---------------------------------------
+#Pass Row or Column Info to avgMedian
+#
+#This function is designed to check that 
+#the sorted list file exists before
+#attempting to read it.
+#---------------------------------------
+function nextStep
+{
+if [ ! -r "sortedList$$" ] 							#Check to see if file is readable
+	then
+		echo "Error: file does not exist"			#No file in directory message
+		tempCleanup									#Cleanup any temp files before exiting
+		exit 1
+else
+	colCount=$(head -n 1 sortedList$$ | wc -w)		#Get the number of columns
+	
+	while read inputFile							#Read From File
+	do
+		avgMedian 									#Function Call
+	done < sortedList$$
+fi
+}
+
+
+#---------------------------------------
+#Columm Horizontal Output
+#
+#This is used to format the column output
+#into two rows.  Averages and Medians. 
+#---------------------------------------
+function columnOutput
+{
+	echo "Averages:" >> columnResultFile$$			#Average Heading
+	
+	#---------------------------------------
+	#Puts the column output on two lines
+	#---------------------------------------
+	currLoop=1
+	while [[ $currLoop -le 2 ]];
+	do
+		cut -f $currLoop resultFile$$ | tr '\n' '\t' >> columnResultFile$$ 	#Get Column and put it into a row
+		echo -e "\t" >> columnResultFile$$
+		((currLoop++))								#Track column position
+		echo "Medians:" >> columnResultFile$$		#Median Heading	 
+	done < resultFile$$
+	
+	#Removes last median line in file
+	head -n -1 columnResultFile$$ > tempFile$$
+	mv tempFile$$ columnResultFile$$
+}
+
+
+#---------------------------------------
+#Created a Sorted List file
+#
+#This is used take the data from tempFile$$
+#and sort it then placing the contents
+#into a sorted list file. 
+#---------------------------------------
+function createSotredList
+{
+ if [ ! -r "tempFile$$" ] 							#Check to see if file is readable
+	then
+		echo "Error: file does not exist"			#No file in directory message
+		tempCleanup									#Cleanup any temp files before exiting
+		exit 1
+else
+	colCount=$(head -n 1 tempFile$$ | wc -w)		#Get the number of columns
+	
+	#---------------------------------------
+	#Convert Columns & Rows while sorting
+	#
+	#This will loop through and sort the files
+	#data by column.  It will then be transposed
+	#into the correct format (Column or Row).
+	#---------------------------------------
+	currLoop=1
+	while [[ $currLoop -le $colCount ]];
+	do
+		cut -f $currLoop tempFile$$ | sort -n | tr '\n' '\t' >> sortedList$$ #Get Column and put it into a row
+		echo -e "\t" >> sortedList$$				#Add tabs to file
+		((currLoop++))								#Track column position
+	done < tempFile$$
+fi
+}
+
+
+#---------------------------------------
+#Temp file Cleanup
+#
+#For easier cleanup.  This function was
+#created so that cleanup can be call after
+#each exit command.
+#---------------------------------------
+function tempCleanup
+{
+	rm -f "tempFile$$"
+	rm -f "sortedList$$"
+	rm -f "resultFile$$"
+	rm -f "columnResultFile$$"
+	rm -f "dataFile$$"
+}
+
+
+#---------------------------------------
+#Error Handeling
+#
+#This is the first step in the program that
+#Will check the users input and determine
+#if there is a file or not.  If not then
+#the user can input data which will be put 
+#in a file.
+#---------------------------------------
+if [ "$#" = "1" ]
+then
+    cat > "dataFile$$"
+elif [ "$#" = "2" ]
+then
+    if [ ! -r "$2" ] 								#Check to see if file is readable
+	then
+		echo "./stats: cannot read $2" >&2			#Error message
+		tempCleanup									#Cleanup any temp files before exiting
+		exit 1
+	else
+		cat $2 >> dataFile$$						#cat input to a new file with process ID
+	fi
+else 
+	echo "./stats {-rows|-cols} [file]" >&2			#Error message
+	tempCleanup										#Cleanup any temp files before exiting
+	exit 1
+fi
+
+
+#---------------------------------------
+#Row
+#
+#If statement to choose the row option.
+#---------------------------------------
+if [[ $1 == -r* ]];
+then
+	#---------------------------------------
+	#Convert Rows to Columns to Prep Sort
+	#
+	#I have only found a way to sort by column.
+	#as a rsult, this is used to turn rows into 
+	#columns. Later the rows will be sorted and
+	#transposed back into rows.
+	#---------------------------------------
+	currLoop=1
+	colCount=$(head -n 1 dataFile$$ | wc -w)		#Get the number of columns
+	while [[ $currLoop -le $colCount ]];
+	do
+		 cut -f $currLoop dataFile$$ | tr '\n' '\t' >> tempFile$$ #Get Column and put it into a row
+		 echo -e "\t" >> tempFile$$					#Add tabs to file
+		((currLoop++))								#Track column position
+	done < dataFile$$
+
+	createSotredList								#Function Call
+	nextStep 										#Function Call
+	
+	echo -e "Average  Median";						#Row Headings
+	cat resultFile$$								
+	
+	tempCleanup										#Cleanup any temp files before exiting
+	
+#---------------------------------------
+#Column
+#
+#If statement to choose the column option.
+#---------------------------------------
+elif [[ $1 == -c* ]];
+then
+	cat dataFile$$ >> tempFile$$					#Make a copy of input in tempFile
+
+	createSotredList								#Function Call
+	nextStep 										#Function Call
+	columnOutput									#Function Call
+	
+	cat columnResultFile$$
+	
+	tempCleanup										#Cleanup any temp files before exiting
+else
+	echo "./stats {-rows|-cols} [file]" >&2
+	tempCleanup										#Cleanup any temp files before exiting
+	exit 1
+fi

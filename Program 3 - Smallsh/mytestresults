@@ -1,0 +1,116 @@
+Pre-script Info
+PID: 25143
+: BEGINNING TEST SCRIPT
+: 
+: --------------------
+: Using comment (5 points if only next prompt is displayed next)
+: : 
+: 
+: --------------------
+: ls (10 points for returning dir contents)
+: HW1
+HW2
+mytestresults
+p3testscript
+Program Py
+smallsh
+smallsh.c
+: 
+: 
+: --------------------
+: ls out junk
+: : 
+: 
+: --------------------
+: cat junk (15 points for correctly returning contents of junk)
+: HW1
+HW2
+junk
+mytestresults
+p3testscript
+Program Py
+smallsh
+smallsh.c
+: 
+: 
+: --------------------
+: wc in junk (15 points for returning correct numbers from wc)
+:  8  9 69
+: 
+: 
+: --------------------
+: wc in junk out junk2; cat junk2 (10 points for returning correct numbers from wc)
+:  8  9 69
+: cat: junk2: No such file or directory
+: 
+: 
+: --------------------
+: test -f badfile (10 points for returning error value of 1, note extraneous &)
+: : exit value 1
+: 
+: 
+: --------------------
+: wc in badfile (10 points for returning text error)
+: cannot open badfile for input
+: 
+: 
+: --------------------
+: badfile (10 points for returning text error)
+: badfile: no such file or directory
+: 
+: 
+: --------------------
+: sleep 100 background (10 points for returning process ID of sleeper)
+: background pid is 25194
+: 
+: 
+: --------------------
+: pkill -signal SIGTERM sleep (10 points for pid of killed process, 10 points for signal)
+: (Ignore message about Operation Not Permitted)
+: pkill: 13900 - Operation not permitted
+pkill: 25044 - Operation not permitted
+pkill: 28213 - Operation not permitted
+background pid terminated is 25194
+terminated by signal 15
+: 
+: 
+: --------------------
+: sleep 1 background (10 pts for pid of bg ps when done, 10 for exit value)
+: background pid is 25205
+: exit value 0
+: 
+: 
+: --------------------
+: pwd
+: /nfs/stak/students/t/townsste/CS344
+: 
+: 
+: --------------------
+: cd
+: /nfs/stak/students/t/townsste
+: 
+: 
+: --------------------
+: pwd (10 points for being in the HOME dir)
+: /nfs/stak/students/t/townsste
+: 
+: 
+: --------------------
+: mkdir testdir25143
+: : 
+: 
+: --------------------
+: cd testdir25143
+: /nfs/stak/students/t/townsste/testdir25143
+: 
+: 
+: --------------------
+: pwd (5 points for being in the newly created dir)
+: /nfs/stak/students/t/townsste/testdir25143
+: --------------------
+: Testing foreground-only mode (20 points for entry & exit text AND ~5 seconds between times)
+: Entering foreground-only mode (& is now ignored)
+: Mon Aug  7 12:52:54 PDT 2017
+: : Mon Aug  7 12:52:59 PDT 2017
+: Exiting foreground-only mode
+: 
